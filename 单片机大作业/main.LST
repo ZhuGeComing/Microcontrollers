@@ -1,0 +1,504 @@
+C51 COMPILER V9.00   MAIN                                                                  12/19/2018 15:38:41 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: D:\Program Files\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include<reg51.h>
+   2          #include<intrins.h>
+   3          #include"XPT2046.h"
+   4          
+   5          sbit IRIN=P3^2;
+   6          sbit SRCLK=P3^6;
+   7          sbit RCLK=P3^5;
+   8          sbit SER=P3^4;
+   9          
+  10          #define COMMONPORTS             P0
+  11          
+  12          
+  13          unsigned char IrValue[6];
+  14          unsigned char Time;
+  15          void IrInit();
+  16          void DelayMs(unsigned int );
+  17          /*******************************************************************************
+  18          * 函数名         : main
+  19          * 函数功能                 : 主函数
+  20          * 输入           : 无
+  21          * 输出           : 无
+  22          *******************************************************************************/
+  23          
+  24          //--列选通控制--//
+  25          unsigned char code TAB[8]  = {0x7f,0xbf,0xdf,0xef,0xf7,0xfb,0xfd,0xfe};
+  26          
+  27          //--点阵字码--//
+  28          unsigned char code CHARCODE1[18][8]=
+  29          {
+  30          
+  31          {0x00,0x00,0x00,0x18,0x18,0x00,0x00,0x00}, //0
+  32          
+  33          {0x00,0x00,0x3C,0x3C,0x3C,0x3C,0x00,0x00}, //1
+  34          
+  35          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x00}, //2
+  36          
+  37          {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}, //3
+  38          
+  39          };
+  40          unsigned char code CHARCODE2[18][8]=
+  41          {
+  42          {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}, 
+  43          
+  44          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x00},
+  45          
+  46          {0x00,0x00,0x3C,0x3C,0x3C,0x3C,0x00,0x00}, 
+  47          
+  48          {0x00,0x00,0x00,0x18,0x18,0x00,0x00,0x00}, //0
+  49          
+  50          };
+  51          unsigned char code CHARCODE3[65][8]=
+  52          {
+  53          
+  54          {0x00,0x00,0x00,0x00,0x08,0x00,0x00,0x00}, //0
+  55          
+C51 COMPILER V9.00   MAIN                                                                  12/19/2018 15:38:41 PAGE 2   
+
+  56          {0x00,0x00,0x00,0x08,0x08,0x00,0x00,0x00}, //1
+  57          
+  58          {0x00,0x00,0x00,0x18,0x08,0x00,0x00,0x00}, //2
+  59          
+  60          {0x00,0x00,0x00,0x18,0x18,0x00,0x00,0x00}, //3
+  61          
+  62          {0x00,0x00,0x00,0x18,0x18,0x10,0x00,0x00}, //3
+  63          
+  64          {0x00,0x00,0x00,0x18,0x18,0x18,0x00,0x00}, //3
+  65          
+  66          {0x00,0x00,0x00,0x18,0x18,0x1C,0x00,0x00}, //3
+  67          
+  68          {0x00,0x00,0x00,0x18,0x1C,0x1C,0x00,0x00}, //3
+  69          
+  70          {0x00,0x00,0x00,0x1C,0x1C,0x1C,0x00,0x00}, //3
+  71          
+  72          {0x00,0x00,0x04,0x1C,0x1C,0x1C,0x00,0x00}, //3
+  73          
+  74          {0x00,0x00,0x0C,0x1C,0x1C,0x1C,0x00,0x00}, //3
+  75          
+  76          {0x00,0x00,0x1C,0x1C,0x1C,0x1C,0x00,0x00}, //3
+  77          
+  78          {0x00,0x00,0x3C,0x1C,0x1C,0x1C,0x00,0x00}, //3
+  79          
+  80          {0x00,0x00,0x3C,0x3C,0x1C,0x1C,0x00,0x00}, //3
+  81          
+  82          {0x00,0x00,0x3C,0x3C,0x3C,0x1C,0x00,0x00}, //3
+  83          
+  84          {0x00,0x00,0x3C,0x3C,0x3C,0x3C,0x00,0x00}, //3
+  85          
+  86          {0x00,0x00,0x3C,0x3C,0x3C,0x3C,0x20,0x00}, //3
+  87          
+  88          {0x00,0x00,0x3C,0x3C,0x3C,0x3C,0x30,0x00}, //3
+  89          
+  90          {0x00,0x00,0x3C,0x3C,0x3C,0x3C,0x38,0x00}, //3
+  91          
+  92          {0x00,0x00,0x3C,0x3C,0x3C,0x3C,0x3C,0x00}, //3
+  93          
+  94          {0x00,0x00,0x3C,0x3C,0x3C,0x3C,0x3E,0x00}, //3
+  95          
+  96          {0x00,0x00,0x3C,0x3C,0x3C,0x3E,0x3E,0x00}, //3
+  97          
+  98          {0x00,0x00,0x3C,0x3C,0x3E,0x3E,0x3E,0x00}, //3
+  99          
+ 100          {0x00,0x00,0x3C,0x3E,0x3E,0x3E,0x3E,0x00}, //3
+ 101          
+ 102          {0x00,0x00,0x3E,0x3E,0x3E,0x3E,0x3E,0x00}, //3
+ 103          
+ 104          {0x00,0x02,0x3E,0x3E,0x3E,0x3E,0x3E,0x00}, //3
+ 105          
+ 106          {0x00,0x06,0x3E,0x3E,0x3E,0x3E,0x3E,0x00}, //3
+ 107          
+ 108          {0x00,0x06,0x3E,0x3E,0x3E,0x3E,0x3E,0x00}, //0
+ 109          
+ 110          {0x00,0x0E,0x3E,0x3E,0x3E,0x3E,0x3E,0x00}, //1
+ 111          
+ 112          {0x00,0x1E,0x3E,0x3E,0x3E,0x3E,0x3E,0x00}, //2
+ 113          
+ 114          {0x00,0x3E,0x3E,0x3E,0x3E,0x3E,0x3E,0x00}, //3
+ 115          
+ 116          {0x00,0x7E,0x3E,0x3E,0x3E,0x3E,0x3E,0x00}, //3
+ 117          
+C51 COMPILER V9.00   MAIN                                                                  12/19/2018 15:38:41 PAGE 3   
+
+ 118          {0x00,0x7E,0x7E,0x3E,0x3E,0x3E,0x3E,0x00}, //3
+ 119          
+ 120          {0x00,0x7E,0x7E,0x7E,0x3E,0x3E,0x3E,0x00}, //3
+ 121          
+ 122          {0x00,0x7E,0x7E,0x7E,0x7E,0x3E,0x3E,0x00}, //3
+ 123          
+ 124          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x3E,0x00}, //3
+ 125          
+ 126          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x00}, //3
+ 127          
+ 128          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x40}, //3
+ 129          
+ 130          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x60}, //3
+ 131          
+ 132          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x70}, //3
+ 133          
+ 134          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x78}, //3
+ 135          
+ 136          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x7C}, //3
+ 137          
+ 138          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E}, //3
+ 139          
+ 140          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x7F}, //3
+ 141          
+ 142          {0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7F,0x7F}, //3
+ 143          
+ 144          {0x00,0x7E,0x7E,0x7E,0x7E,0x7F,0x7F,0x7F}, //3
+ 145          
+ 146          {0x00,0x7E,0x7E,0x7E,0x7F,0x7F,0x7F,0x7F}, //3
+ 147          
+ 148          {0x00,0x7E,0x7E,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 149          
+ 150          {0x00,0x7E,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 151          
+ 152          {0x00,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 153          
+ 154          {0x01,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 155          
+ 156          {0x03,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 157          
+ 158          {0x07,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 159          
+ 160          {0x0F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 161          
+ 162          {0x1F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 163          
+ 164          {0x3F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 165          
+ 166          {0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 167          
+ 168          {0xFF,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 169          
+ 170          {0xFF,0xFF,0x7F,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 171          
+ 172          {0xFF,0xFF,0xFF,0x7F,0x7F,0x7F,0x7F,0x7F}, //3
+ 173          
+ 174          {0xFF,0xFF,0xFF,0xFF,0x7F,0x7F,0x7F,0x7F}, //3
+ 175          
+ 176          {0xFF,0xFF,0xFF,0xFF,0xFF,0x7F,0x7F,0x7F}, //3
+ 177          
+ 178          {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x7F,0x7F}, //3
+ 179          
+C51 COMPILER V9.00   MAIN                                                                  12/19/2018 15:38:41 PAGE 4   
+
+ 180          {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x7F}, //3
+ 181          
+ 182          {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF} //3
+ 183          
+ 184          };
+ 185          
+ 186          unsigned char code CHARCODE4[18][8]=
+ 187          {
+ 188          {0x00,0x00,0x00,0x18,0x18,0x00,0x00,0x00}, //0
+ 189          
+ 190          {0x00,0x00,0x3C,0x3C,0x3C,0x3C,0x00,0x00},
+ 191          
+ 192          
+ 193          };
+ 194          
+ 195          unsigned char code CHARCODE5[18][8]=
+ 196          {
+ 197          {0x00,0x00,0x3C,0x3C,0x3C,0x3C,0x00,0x00}, 
+ 198          
+ 199          {0x00,0x00,0x00,0x18,0x18,0x00,0x00,0x00},
+ 200          
+ 201          
+ 202          };
+ 203          
+ 204          void delay(unsigned int time)
+ 205          {
+ 206   1        unsigned int i,j;
+ 207   1        for(i=0;i<time;i++)
+ 208   1          for(j=0;j<121;j++);
+ 209   1      }
+ 210          
+ 211          /*******************************************************************************
+ 212          * 函数名         : Hc595SendByte(unsigned char dat)
+ 213          * 函数功能                 : 想74H595发送一个字节的数据
+ 214          * 输入           : 无
+ 215          * 输出           : 无
+ 216          *******************************************************************************/
+ 217          void Hc595SendByte(unsigned char dat)
+ 218          {
+ 219   1              unsigned char a;
+ 220   1              SRCLK=0;
+ 221   1              RCLK=0;
+ 222   1              for(a=0;a<8;a++)
+ 223   1              {
+ 224   2                      SER=dat>>7;
+ 225   2                      dat<<=1;
+ 226   2      
+ 227   2                      SRCLK=1;
+ 228   2                      _nop_();
+ 229   2                      _nop_();
+ 230   2                      SRCLK=0;        
+ 231   2              }
+ 232   1      
+ 233   1              RCLK=1;
+ 234   1              _nop_();
+ 235   1              _nop_();
+ 236   1              RCLK=0;
+ 237   1      }
+ 238          
+ 239          void main()
+ 240          {
+ 241   1              unsigned char i;
+C51 COMPILER V9.00   MAIN                                                                  12/19/2018 15:38:41 PAGE 5   
+
+ 242   1              unsigned char tab, j;
+ 243   1              uint temp;
+ 244   1              IrInit();       
+ 245   1              while(1)
+ 246   1              {
+ 247   2                      temp = Read_AD_Data(0xA4);              //   AIN2 光敏电阻
+ 248   2      
+ 249   2                      if(temp > 70){
+ 250   3                              IrValue[5]=IrValue[2]&0x0f;             //低位  
+ 251   3                              if(IrValue[5] == 6) {
+ 252   4                                      for(j = 0;j < 4; j++){
+ 253   5                                              for(i=0;i<30;i++){
+ 254   6                                                      for(tab=0;tab<8;tab++)
+ 255   6                                                              {       
+ 256   7                                                              Hc595SendByte(0x00);                         //消隐                                                                                                                             
+ 257   7                                                              COMMONPORTS     = TAB[tab];                              //输出字码     
+ 258   7                                                              Hc595SendByte(CHARCODE1[j][tab]);       
+ 259   7                                                              delay(2);               
+ 260   7                                                              }
+ 261   6                                                      }       
+ 262   5                                      }       
+ 263   4                              }
+ 264   3                              if(IrValue[5] == 12) {
+ 265   4                                      for(j = 0;j < 4; j++){
+ 266   5                                              for(i=0;i<30;i++){
+ 267   6                                                      for(tab=0;tab<8;tab++)
+ 268   6                                                              {       
+ 269   7                                                              Hc595SendByte(0x00);                         //消隐                                                                                                                             
+ 270   7                                                              COMMONPORTS     = TAB[tab];                              //输出字码     
+ 271   7                                                              Hc595SendByte(CHARCODE2[j][tab]);       
+ 272   7                                                              delay(2);               
+ 273   7                                                              }
+ 274   6                                                      }       
+ 275   5                                      }       
+ 276   4                              }
+ 277   3                              if(IrValue[5] == 8) {
+ 278   4                                      for(j = 0;j < 65; j++){
+ 279   5                                              for(i=0;i<5;i++){
+ 280   6                                                      for(tab=0;tab<8;tab++)
+ 281   6                                                              {       
+ 282   7                                                              Hc595SendByte(0x00);                         //消隐                                                                                                                             
+ 283   7                                                              COMMONPORTS     = TAB[tab];                              //输出字码     
+ 284   7                                                              Hc595SendByte(CHARCODE3[j][tab]);       
+ 285   7                                                              delay(2);               
+ 286   7                                                              }
+ 287   6                                                      }       
+ 288   5                                      }       
+ 289   4                              }
+ 290   3                              if(IrValue[5] == 14) {
+ 291   4                                      for(j = 65;j > 0; j--){
+ 292   5                                              for(i=0;i<5;i++){
+ 293   6                                                      for(tab=0;tab<8;tab++)
+ 294   6                                                              {       
+ 295   7                                                              Hc595SendByte(0x00);                         //消隐                                                                                                                             
+ 296   7                                                              COMMONPORTS     = TAB[tab];                              //输出字码     
+ 297   7                                                              Hc595SendByte(CHARCODE3[j-1][tab]);     
+ 298   7                                                              delay(2);               
+ 299   7                                                              }
+ 300   6                                                      }       
+ 301   5                                      }       
+ 302   4                              }                       
+ 303   3                      
+C51 COMPILER V9.00   MAIN                                                                  12/19/2018 15:38:41 PAGE 6   
+
+ 304   3                      }
+ 305   2                      else{
+ 306   3                              IrValue[5]=IrValue[2]&0x0f;             //低位  
+ 307   3                              if(IrValue[5] == 6) {
+ 308   4                                      for(j = 0;j < 2; j++){
+ 309   5                                              for(i=0;i<30;i++){
+ 310   6                                                      for(tab=0;tab<8;tab++)
+ 311   6                                                              {       
+ 312   7                                                              Hc595SendByte(0x00);                         //消隐                                                                                                                             
+ 313   7                                                              COMMONPORTS     = TAB[tab];                              //输出字码     
+ 314   7                                                              Hc595SendByte(CHARCODE4[j][tab]);       
+ 315   7                                                              delay(2);               
+ 316   7                                                              }
+ 317   6                                                      }       
+ 318   5                                      }       
+ 319   4                              }
+ 320   3                              if(IrValue[5] == 12) {
+ 321   4                                      for(j = 0;j < 2; j++){
+ 322   5                                              for(i=0;i<30;i++){
+ 323   6                                                      for(tab=0;tab<8;tab++)
+ 324   6                                                              {       
+ 325   7                                                              Hc595SendByte(0x00);                         //消隐                                                                                                                             
+ 326   7                                                              COMMONPORTS     = TAB[tab];                              //输出字码     
+ 327   7                                                              Hc595SendByte(CHARCODE5[j][tab]);       
+ 328   7                                                              delay(2);               
+ 329   7                                                              }
+ 330   6                                                      }       
+ 331   5                                      }       
+ 332   4                              }
+ 333   3                              if(IrValue[5] == 8) {
+ 334   4                                      for(j = 0;j < 16; j++){
+ 335   5                                              for(i=0;i<5;i++){
+ 336   6                                                      for(tab=0;tab<8;tab++)
+ 337   6                                                              {       
+ 338   7                                                              Hc595SendByte(0x00);                         //消隐                                                                                                                             
+ 339   7                                                              COMMONPORTS     = TAB[tab];                              //输出字码     
+ 340   7                                                              Hc595SendByte(CHARCODE3[j][tab]);       
+ 341   7                                                              delay(2);               
+ 342   7                                                              }
+ 343   6                                                      }       
+ 344   5                                      }       
+ 345   4                              }
+ 346   3                              if(IrValue[5] == 14) {
+ 347   4                                      for(j = 16;j > 0; j--){
+ 348   5                                              for(i=0;i<5;i++){
+ 349   6                                                      for(tab=0;tab<8;tab++)
+ 350   6                                                              {       
+ 351   7                                                              Hc595SendByte(0x00);                         //消隐                                                                                                                             
+ 352   7                                                              COMMONPORTS     = TAB[tab];                              //输出字码     
+ 353   7                                                              Hc595SendByte(CHARCODE3[j-1][tab]);     
+ 354   7                                                              delay(2);               
+ 355   7                                                              }
+ 356   6                                                      }       
+ 357   5                                      }       
+ 358   4                              }                       
+ 359   3                      
+ 360   3                      }
+ 361   2      
+ 362   2      
+ 363   2              }
+ 364   1      }                                                                        
+ 365          /*******************************************************************************
+C51 COMPILER V9.00   MAIN                                                                  12/19/2018 15:38:41 PAGE 7   
+
+ 366          * 函数名         : DelayMs()
+ 367          * 函数功能                 : 延时
+ 368          * 输入           : x
+ 369          * 输出           : 无
+ 370          *******************************************************************************/
+ 371          
+ 372          void DelayMs(unsigned int x)   //0.14ms误差 0us
+ 373          {
+ 374   1       unsigned char i;
+ 375   1        while(x--)
+ 376   1       {
+ 377   2        for (i = 0; i<13; i++)
+ 378   2       {}
+ 379   2       }
+ 380   1      }
+ 381          /*******************************************************************************
+ 382          * 函数名         : IrInit()
+ 383          * 函数功能                 : 初始化红外线接收
+ 384          * 输入           : 无
+ 385          * 输出           : 无
+ 386          *******************************************************************************/
+ 387          
+ 388          void IrInit()
+ 389          {
+ 390   1              IT0=1;//下降沿触发
+ 391   1              EX0=1;//打开中断0允许
+ 392   1              EA=1;   //打开总中断
+ 393   1      
+ 394   1              IRIN=1;//初始化端口
+ 395   1      }
+ 396          /*******************************************************************************
+ 397          * 函数名         : ReadIr()
+ 398          * 函数功能                 : 读取红外数值的中断函数
+ 399          * 输入           : 无
+ 400          * 输出           : 无
+ 401          *******************************************************************************/
+ 402          
+ 403          void ReadIr() interrupt 0
+ 404          {
+ 405   1              unsigned char j,k;
+ 406   1              unsigned int err;
+ 407   1              Time=0;                                  
+ 408   1              DelayMs(70);
+ 409   1      
+ 410   1              if(IRIN==0)             //确认是否真的接收到正确的信号
+ 411   1              {        
+ 412   2                      
+ 413   2                      err=1000;                               //1000*10us=10ms,超过说明接收到错误的信号
+ 414   2                      /*当两个条件都为真是循环，如果有一个条件为假的时候跳出循环，免得程序出错的时
+ 415   2                      侯，程序死在这里*/      
+ 416   2                      while((IRIN==0)&&(err>0))       //等待前面9ms的低电平过去               
+ 417   2                      {                       
+ 418   3                              DelayMs(1);
+ 419   3                              err--;
+ 420   3                      } 
+ 421   2                      if(IRIN==1)                     //如果正确等到9ms低电平
+ 422   2                      {
+ 423   3                              err=500;
+ 424   3                              while((IRIN==1)&&(err>0))                //等待4.5ms的起始高电平过去
+ 425   3                              {
+ 426   4                                      DelayMs(1);
+ 427   4                                      err--;
+C51 COMPILER V9.00   MAIN                                                                  12/19/2018 15:38:41 PAGE 8   
+
+ 428   4                              }
+ 429   3                              for(k=0;k<4;k++)                //共有4组数据
+ 430   3                              {                               
+ 431   4                                      for(j=0;j<8;j++)        //接收一组数据
+ 432   4                                      {
+ 433   5      
+ 434   5                                              err=60;         
+ 435   5                                              while((IRIN==0)&&(err>0))//等待信号前面的560us低电平过去
+ 436   5      //                                      while (!IRIN)
+ 437   5                                              {
+ 438   6                                                      DelayMs(1);
+ 439   6                                                      err--;
+ 440   6                                              }
+ 441   5                                              err=500;
+ 442   5                                              while((IRIN==1)&&(err>0))        //计算高电平的时间长度。
+ 443   5                                              {
+ 444   6                                                      DelayMs(1);//0.14ms
+ 445   6                                                      Time++;
+ 446   6                                                      err--;
+ 447   6                                                      if(Time>30)
+ 448   6                                                      {
+ 449   7                                                              EX0=1;
+ 450   7                                                              return;
+ 451   7                                                      }
+ 452   6                                              }
+ 453   5                                              IrValue[k]>>=1;  //k表示第几组数据
+ 454   5                                              if(Time>=8)                     //如果高电平出现大于565us，那么是1
+ 455   5                                              {
+ 456   6                                                      IrValue[k]|=0x80;
+ 457   6                                              }
+ 458   5                                              Time=0;         //用完时间要重新赋值                                                    
+ 459   5                                      }
+ 460   4                              }
+ 461   3                      }
+ 462   2                      if(IrValue[2]!=~IrValue[3])
+ 463   2                      {
+ 464   3                              return;
+ 465   3                      }
+ 466   2              }                       
+ 467   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    958    ----
+   CONSTANT SIZE    =   1104    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
